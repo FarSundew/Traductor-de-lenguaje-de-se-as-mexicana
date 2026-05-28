@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traductor de Lenguaje de Señas</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            justify-content: center;
+            max-width: 1200px;
+            width: 100%;
+        }
+        .video-section, .info-section {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .video-section {
+            flex: 1;
+            min-width: 300px;
+        }
+        img {
+            width: 100%;
+            border-radius: 8px;
+            background-color: #000;
+        }
+        .info-section {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        h1 { color: #1a73e8; margin-top: 0; }
+        .box {
+            background: #e8f0fe;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 5px solid #1a73e8;
+        }
+        .box h3 { margin: 0 0 10px 0; color: #5f6368; }
+        .box p { margin: 0; font-size: 2.5em; font-weight: bold; color: #202124; min-height: 48px; }
+        .word-text { color: #ea4335 !important; }
+        .buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+        button {
+            padding: 15px 20px; font-size: 1.1em; font-weight: bold;
+            border: none; border-radius: 8px; cursor: pointer;
+            transition: transform 0.1s, opacity 0.3s; flex: 1; min-width: 140px;
+        }
+        button:active { transform: scale(0.95); }
+        .btn-speak { background: #34a853; color: white; }
+        .btn-speak:hover { opacity: 0.9; }
+        .btn-delete { background: #fbbc05; color: white; }
+        .btn-delete:hover { opacity: 0.9; }
+        .btn-reset { background: #ea4335; color: white; }
+        .btn-reset:hover { opacity: 0.9; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="video-section">
+            <h1>Cámara en Vivo</h1>
+            <img src="{{ url_for('video_feed') }}" alt="Video Stream">
+        </div>
+        <div class="info-section">
+            <h1>Traductor de Señas</h1>
+            <div class="box">
+                <h3>Letra Detectada:</h3>
+                <p id="letra-detectada">-</p>
+            </div>
+            <div class="box">
+                <h3>Palabra Formada:</h3>
+                <p id="palabra-formada" class="word-text"></p>
+            </div>
+            <div class="buttons">
+                <button class="btn-speak" onclick="sendAction('speak')">🔊 Escuchar Palabra</button>
+                <button class="btn-delete" onclick="sendAction('delete')">⬅️ Borrar Letra</button>
+                <button class="btn-reset" onclick="sendAction('reset')">🗑️ Reiniciar Todo</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Enviar evento de los botones a Python
+        function sendAction(actionType) {
+            fetch('/action', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: actionType })
+            });
+        }
+        // Preguntar a Python qué letra y palabra hay cada 300 milisegundos
+        setInterval(() => {
+            fetch('/get_state')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('letra-detectada').innerText = data.letra || '-';
+                    document.getElementById('palabra-formada').innerText = data.palabra || '';
+                });
+        }, 300);
+    </script>
+</body>
+</html>
